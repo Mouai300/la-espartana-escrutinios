@@ -1,0 +1,77 @@
+{
+  "version": 1,
+  "source": "https://www.loteria300.es/quiniela.php",
+  "fetchedAt": "2026-10-31T10:42:02.425Z",
+  "current": {
+    "season": "2026-27",
+    "round": 18
+  },
+  "rounds": [
+    {
+      "season": "2026-27",
+      "round": 18,
+      "date": "2026-11-01",
+      "matches": [
+        "Levante (M) - At. Madrid (M)",
+        "Rayo Vallecano (M) - Celta (M)",
+        "Betis (M) - Málaga (M)",
+        "Barcelona (M) - Alavés (M)",
+        "Getafe (M) - Sevilla (M)",
+        "Racing Santander (M) - Real Madrid (M)",
+        "Elche (M) - Valencia (M)",
+        "Eibar (M) - Almería (M)",
+        "Eldense (M) - Granada (M)",
+        "Burgos (M) - Castellón (M)",
+        "Alavés (F) - Real Sociedad (F)",
+        "Madrid Cff (F) - Deportivo (F)",
+        "Sevilla (F) - Real Madrid (F)",
+        "Tenerife (F) - Athletic Club (F)",
+        "Athletic Club (M) - Real Sociedad (M)"
+      ]
+    },
+    {
+      "season": "2026-27",
+      "round": 19,
+      "date": "2026-11-05",
+      "matches": [
+        "Barcelona (M) - Aston Villa (M)",
+        "Bodo Glimt (M) - Lille (M)",
+        "Manchester United (M) - Roma (M)",
+        "Villarreal (M) - Psg (M)",
+        "Aek Atenas (M) - Real Madrid (M)",
+        "Fenerbahçe (M) - Liverpool (M)",
+        "Borussia Dortmund (M) - Betis (M)",
+        "Oporto (M) - Nápoles (M)",
+        "Lens (M) - Como (M)",
+        "Leipzig (M) - Manchester City (M)",
+        "Slavia Praga (M) - Arsenal (M)",
+        "Real Sociedad (M) - Lyon (M)",
+        "Celta (M) - Union Sg (M)",
+        "Getafe (M) - Brighton (M)",
+        "At. Madrid (M) - Bayern Múnich (M)"
+      ]
+    },
+    {
+      "season": "2026-27",
+      "round": 20,
+      "date": "2026-11-08",
+      "matches": [
+        "Málaga (M) - Racing De Santander (M)",
+        "Osasuna (M) - Athletic Club (M)",
+        "Valencia (M) - Real Madrid (M)",
+        "Elche (M) - Betis (M)",
+        "Real Sociedad (M) - Rayo Vallecano (M)",
+        "Celta (M) - Levante (M)",
+        "Villarreal (M) - Getafe (M)",
+        "Cádiz (M) - R. Oviedo (M)",
+        "Girona (M) - Almería (M)",
+        "Sporting (M) - R. Valladolid (M)",
+        "Athletic Club (F) - Real Madrid (F)",
+        "Logroño (F) - Sevilla (F)",
+        "Eibar (F) - Real Sociedad (F)",
+        "Tenerife (F) - Alavés (F)",
+        "At. Madrid (M) - Barcelona (M)"
+      ]
+    }
+  ]
+}
