@@ -4,12 +4,12 @@ Página independiente de La Espartana: `compartir.html`. No modifica el historia
 
 ## Uso
 
-1. Abrir la página en Safari o en otro navegador.
-2. Adjuntar un TXT; revisar nombre, temporada, jornada y precio por apuesta.
-3. En «Partidos de esta jornada», pegar los 15 encuentros en orden y pulsar «Aplicar los 15 partidos». La última línea corresponde al Pleno. Los nombres quedan incluidos en el enlace y se ven junto a los botones de resultados. No se descargan automáticamente de una fuente externa.
-4. Introducir los resultados y, cuando proceda, los premios unitarios.
-4. Pulsar Compartir enlace y elegir WhatsApp, o Copiar enlace y pegarlo en el chat.
-5. El destinatario abre la combinación y puede editar su propia consulta sin instalar nada.
+1. Abrir la página desde el enlace de WhatsApp, Safari u otro navegador.
+2. Indicar la jornada y adjuntar el TXT. El nombre se toma del archivo y el precio inicial es 0,75 euros.
+3. Pulsar «Enviar por WhatsApp» al principio de la combinación y elegir WhatsApp en el menú del móvil. Si el menú no está disponible, se copia el enlace o se muestra para copiarlo manualmente.
+4. El destinatario abre la combinación, sin adjuntar archivos ni instalar nada, y puede editar su propia consulta.
+
+«Opciones y partidos de la jornada» permite cambiar nombre, temporada y precio, y pegar los quince encuentros. Al compartir se validan e incluyen los nombres sin un paso adicional de confirmación. El botón «Ver los partidos en la consulta» solo sirve para previsualizarlos antes. Los resultados y los premios unitarios siguen editándose manualmente.
 
 Los resultados y premios son manuales. No se han conectado fuentes de partidos o resultados en directo. Cada enlace es una instantánea: los cambios posteriores requieren generar otro enlace. No hay sincronización entre destinatarios. Al cambiar de temporada o jornada se borran de la consulta los nombres de equipos, resultados y premios anteriores, para no atribuirlos a otra jornada. Los enlaces antiguos sin equipos siguen funcionando.
 
