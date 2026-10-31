@@ -1,19 +1,19 @@
-# La Espartana Escrutinios - prueba web
+# La Espartana Escrutinios — prueba iOS
 
-Versión estática para abrir en Safari y otros navegadores. No requiere instalar una aplicación de Apple.
+Rama independiente para preparar la primera compilación y prueba nativa en iPhone. No fusionar esta rama tal cual sobre la web publicada: `main` mantiene GitHub Pages.
 
-Incluye jornadas, archivos independientes, importación TXT/PDF con revisión, resultados manuales, categorías excluyentes, Elige 8 separado, premios editables e informe imprimible. El OCR de fotos es experimental y puede rechazar resguardos que no reconozca con seguridad. Los marcadores automáticos todavía no están conectados.
+## Configuración
 
-Los archivos que seleccione cada usuario se procesan en su navegador y sus apuestas se guardan localmente. Esta carpeta de publicación no contiene los PDF, TXT, fotos de resguardos ni el historial de prueba del usuario. El logo se incluye como identidad visual de la app.
+- Entrada: `index.next.js` / `App.next.js`.
+- Proyecto Expo: `@mouai300s-team/la-espartana-escrutinios`.
+- Perfil EAS: `testflight`, distribución `store`.
+- Módulos nativos propios para protección local y lectura de documentos.
+- SQLCipher activado; sin actualizaciones OTA.
 
-El código incluido aquí está empaquetado para publicación. La fuente de desarrollo se conserva en el proyecto local la-espartana.
+El paquete contiene código y recursos de la app, no combinaciones TXT, fotos, PDF ni copias de usuarios. El catálogo de partidos es una copia histórica pública; no hay LiveScore conectado ni recepción directa desde WhatsApp.
 
-## GitHub Pages
+## Estado de validación
 
-La carpeta está lista para servirse desde la raíz de un repositorio. Hay que habilitar GitHub Pages en la configuración del repositorio y elegir una modalidad disponible para la cuenta. Tener un repositorio privado no garantiza que GitHub Pages esté incluido en el plan ni que la web publicada tenga acceso restringido.
+185 pruebas locales correctas en el proyecto de desarrollo. Empaquetado JavaScript comprobado. Swift, SQLCipher, biometría, lectura y exportación aún deben compilarse y probarse en un iPhone. La presencia de esta rama no significa que exista una compilación ni una versión enviada a TestFlight, ni constituye una garantía de seguridad.
 
-No hay inicio de sesión en la web. Si se publica en una dirección pública, cualquiera que tenga el enlace podrá abrir la interfaz; esto no revela los datos guardados por otras personas en sus navegadores.
-
-Repositorio: https://github.com/Mouai300/la-espartana-escrutinios
-
-La web se publica mediante GitHub Pages cuando termina la configuración del despliegue. Los resultados siguen siendo manuales y la lectura de fotos es experimental.
+Las credenciales de Apple, la primera compilación, la revisión de cifrado para exportación y el envío a TestFlight están pendientes. No se incluyen credenciales en el repositorio.

@@ -1,0 +1,51 @@
+{
+  "expo": {
+    "name": "La Espartana Escrutinios",
+    "slug": "la-espartana-escrutinios",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "ios": {
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "Desbloquea tus escrutinios con Face ID o el código del iPhone."
+      },
+      "bundleIdentifier": "es.loteria300.espartanaescrutinios",
+      "appleTeamId": "TL3S8NQ53N",
+      "buildNumber": "1"
+    },
+    "assetBundlePatterns": [
+      "assets/*"
+    ],
+    "plugins": [
+      "expo-asset",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Selecciona una foto de tu resguardo para leer sus apuestas en este iPhone.",
+          "cameraPermission": "Fotografía tu resguardo para revisar e importar sus apuestas.",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-sqlite",
+        {
+          "useSQLCipher": true
+        }
+      ]
+    ],
+    "platforms": [
+      "ios"
+    ],
+    "owner": "mouai300s-team",
+    "icon": "./assets/logo.png",
+    "updates": {
+      "enabled": false,
+      "checkAutomatically": "NEVER"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "d3aeed0f-72d0-46f1-bd87-86e6228cc637"
+      }
+    }
+  }
+}
