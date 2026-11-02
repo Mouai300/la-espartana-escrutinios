@@ -14,6 +14,9 @@ const {
   activeResults
 } = require('./src/next/consultation');
 const {
+  fetchLiveScore
+} = require('./src/next/livescore');
+const {
   overview,
   displayTotals: totals,
   page
@@ -67,6 +70,9 @@ function errorText(error) {
     CAMERA_PERMISSION: 'Activa el permiso de cámara o selecciona una foto guardada.',
     RECOVERY_CANCELLED: 'La recuperación se interrumpió. Vuelve a revisar la copia.',
     RECOVERY_IN_PROGRESS: 'Termina o cancela la recuperación antes de abrir el historial.'
+    ,LIVE_UNAVAILABLE: 'No se han podido consultar los resultados en directo de Lotería 300. Comprueba tu conexión o vuelve a intentarlo más tarde.'
+    ,LIVE_INVALID: 'Lotería 300 ha devuelto un formato de resultados no reconocido. No se ha modificado ninguna jornada.'
+    ,LIVE_ROUND_MISMATCH: 'La consulta corresponde a otra jornada. No se ha modificado ninguna jornada.'
   }[error?.code] || 'No se ha completado la operación. Revisa los datos y vuelve a intentarlo. El historial anterior no se borra.';
 }
 function Button({
@@ -670,7 +676,8 @@ function Consultation({
     [pleno, setPleno] = useState(results.pleno),
     [screen, setScreen] = useState('partidos'),
     [menuOpen, setMenuOpen] = useState(false),
-    [simulationActive, setSimulationActive] = useState(startMode === 'simulation');
+    [simulationActive, setSimulationActive] = useState(startMode === 'simulation'),
+    [liveBusy, setLiveBusy] = useState(false);
   useEffect(() => {
     setSigns(results.signs);
     setPleno(results.pleno);
@@ -690,10 +697,21 @@ function Consultation({
     setScreen(value);
     setMenuOpen(false);
   };
+  async function updateLive() {
+    setLiveBusy(true);
+    try {
+      const live = await fetchLiveScore(r.number);
+      await perform({type: 'liveResults', roundId: r.id, results: live});
+    } catch (error) {
+      Alert.alert('Actualizar resultados', errorText({code: error?.message}));
+    } finally {
+      setLiveBusy(false);
+    }
+  }
   return <View style={styles.scrutiny}><View style={styles.scrutinyHeader}><View><Text style={styles.eyebrow}>COMBINACIÓN</Text><Text style={styles.scrutinyTitle}>{file.name}</Text><Text style={styles.scrutinyMeta}>Jornada {r.number} · {file.bets.length.toLocaleString('es-ES')} apuestas</Text></View><Pressable accessibilityRole="button" accessibilityLabel="Abrir menú de escrutinio" onPress={() => setMenuOpen(!menuOpen)} style={styles.menuButton}><Text style={styles.menuButtonText}>Opciones ▾</Text></Pressable></View>
  {menuOpen && <View style={styles.menu}><Button title="Partidos y resultados" selected={screen === 'partidos'} disabled={disabled} onPress={() => select('partidos')} /><Button title="Aciertos y columnas" selected={screen === 'aciertos'} disabled={disabled} onPress={() => select('aciertos')} /><Button title="Elige 8" selected={screen === 'elige'} disabled={disabled} onPress={() => select('elige')} /><Button title="Volver a combinaciones" disabled={disabled} onPress={onClose} /></View>}
  <View style={styles.tabRow}><Pressable accessibilityRole="tab" accessibilityState={{selected:screen === 'partidos'}} onPress={() => select('partidos')} style={[styles.tab, screen === 'partidos' && styles.tabActive]}><Text style={[styles.tabText, screen === 'partidos' && styles.tabTextActive]}>Partidos</Text></Pressable><Pressable accessibilityRole="tab" accessibilityState={{selected:screen === 'aciertos'}} onPress={() => select('aciertos')} style={[styles.tab, screen === 'aciertos' && styles.tabActive]}><Text style={[styles.tabText, screen === 'aciertos' && styles.tabTextActive]}>Aciertos</Text></Pressable><Pressable accessibilityRole="tab" accessibilityState={{selected:screen === 'elige'}} onPress={() => select('elige')} style={[styles.tab, screen === 'elige' && styles.tabActive]}><Text style={[styles.tabText, screen === 'elige' && styles.tabTextActive]}>Elige 8</Text></Pressable></View>
- {screen === 'partidos' && <><View style={styles.modeRow}><Button title="Resultados de la jornada" selected={!isSimulation} disabled={disabled} onPress={() => { setSimulationActive(false); perform({ type: 'showRound', fileId: file.id }); }} /><Button title="Simulación" selected={isSimulation} disabled={disabled} onPress={() => setSimulationActive(true)} /></View><Text style={styles.badge}>{isSimulation ? 'SIMULACIÓN ACTIVA' : 'RESULTADOS GUARDADOS DE LA JORNADA'}</Text><Notice>{isSimulation ? 'La simulación no modifica los resultados de la jornada hasta que pulses Guardar simulación.' : r.results ? 'Origen: ' + r.results.source + ' · ' + r.results.checkedAt : 'No hay resultados consultados. Los partidos están pendientes.'}</Notice>
+ {screen === 'partidos' && <><View style={styles.modeRow}><Button title="Resultados de la jornada" selected={!isSimulation} disabled={disabled || liveBusy} onPress={() => { setSimulationActive(false); perform({ type: 'showRound', fileId: file.id }); }} /><Button title="Simulación" selected={isSimulation} disabled={disabled || liveBusy} onPress={() => setSimulationActive(true)} /></View><Button title={liveBusy ? 'Actualizando resultados…' : 'Actualizar resultados'} disabled={disabled || liveBusy} onPress={updateLive} /><Text style={styles.badge}>{isSimulation ? 'SIMULACIÓN ACTIVA' : 'RESULTADOS GUARDADOS DE LA JORNADA'}</Text><Notice>{isSimulation ? 'La simulación no modifica los resultados de la jornada hasta que pulses Guardar simulación.' : r.results ? 'Origen: ' + r.results.source + ' · ' + r.results.checkedAt : 'No hay resultados consultados. Los partidos están pendientes.'} La consulta LiveScore se guarda siempre como provisional.</Notice>
  <Text style={styles.sectionHeading}>Los 14 partidos</Text><View style={styles.fixtureList}>{Array.from({length: 14}, (_, index) => <View key={index} style={styles.fixture}><Text style={styles.fixtureNumber}>{index + 1}</Text><Text style={styles.fixtureName}>{r.matches[index]?.label || 'Partido sin nombre guardado'}</Text><View style={styles.signRow}>{['1', 'X', '2'].map(value => <Pressable key={value} accessibilityRole="button" accessibilityLabel={'Partido ' + (index + 1) + ': ' + value} accessibilityState={{selected: signs[index] === value}} disabled={disabled} onPress={() => setSign(index, value)} style={[styles.signButton, signs[index] === value && styles.signSelected]}><Text style={[styles.signText, signs[index] === value && styles.signTextSelected]}>{value}</Text></Pressable>)}</View></View>)}</View>
  <View style={styles.plenoCard}><Text style={styles.sectionHeading}>15 · Pleno al 15</Text>{['Local', 'Visitante'].map((label, index) => <View key={label} style={styles.plenoRow}><Text style={styles.plenoLabel}>{label}</Text><View style={styles.signRow}>{['0', '1', '2', 'M'].map(value => <Pressable key={value} accessibilityRole="button" accessibilityLabel={label + ': ' + value} accessibilityState={{selected: pleno[index] === value}} disabled={disabled} onPress={() => setPleno(current => current.slice(0, index) + value + current.slice(index + 1))} style={[styles.goalButton, pleno[index] === value && styles.goalSelected]}><Text style={styles.signText}>{value}</Text></Pressable>)}</View></View>)}</View>
  {(signs !== results.signs || pleno !== results.pleno) && <Notice>Cambios pendientes. Pulsa Guardar simulación para recalcular los aciertos.</Notice>}
