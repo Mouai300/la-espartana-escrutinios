@@ -179,7 +179,8 @@ function PrivateWorkspace({
     [price, setPrice] = useState('0,75');
   const [working, setWorking] = useState(false),
     [search, setSearch] = useState(''),
-    [offset, setOffset] = useState(0);
+    [offset, setOffset] = useState(0),
+    [openMode, setOpenMode] = useState(null);
   useEffect(() => {
     if (!data) return;
     const id = data.state.lastView?.roundId,
@@ -190,6 +191,7 @@ function PrivateWorkspace({
   useEffect(() => {
     setOffset(0);
     setSearch('');
+    setOpenMode(null);
   }, [data?.state.lastView?.fileId, data?.state.lastView?.hits, data?.state.lastView?.columnNumber]);
   if (!data) return <View style={styles.card}><Text style={styles.text}>El historial aún no está cargado.</Text><Button title="Cargar historial" disabled={workspace.isBusy()} onPress={() => workspace.load().catch(e => Alert.alert('Historial', errorText(e)))} /></View>;
   const state = data.state,
@@ -279,7 +281,8 @@ function PrivateWorkspace({
         type: 'selectFile',
         fileId: x.id
       })} />)}</View>}
- {f && <Consultation key={f.id} state={state} file={f} view={v} disabled={disabled} perform={perform} search={search} setSearch={setSearch} offset={offset} setOffset={setOffset} />}
+ {f && !openMode && <View style={styles.card}><Text style={styles.heading}>Combinación seleccionada</Text><Text style={styles.text}>{f.name} · {f.bets.length.toLocaleString('es-ES')} apuestas</Text><Notice>Abre una única pantalla de escrutinio. Puedes cambiar entre resultados de la jornada y simulación desde arriba, sin duplicar datos.</Notice><Button title="Abrir escrutinio" disabled={disabled} onPress={() => setOpenMode('results')} /><Button title="Simulación" disabled={disabled} onPress={() => setOpenMode('simulation')} /></View>}
+ {f && openMode && <Consultation key={f.id + '-' + openMode} startMode={openMode} onClose={() => setOpenMode(null)} state={state} file={f} view={v} disabled={disabled} perform={perform} search={search} setSearch={setSearch} offset={offset} setOffset={setOffset} />}
  {r && <PrizeEditor key={r.id} round={r} disabled={disabled} perform={perform} />}
  {f && <ReportPanel key={'report-' + f.id} runtime={runtime} file={f} disabled={disabled} />}
  <BackupPanel runtime={runtime} />
@@ -648,6 +651,8 @@ function BackupPanel({
   return <View style={styles.card}><Text style={styles.heading}>Copias cifradas</Text><Notice>Guarda una copia y comprueba después el archivo guardado. La hoja de compartir por sí sola no confirma que se haya guardado.</Notice><Field label="Contraseña de copia (mínimo 12 caracteres)" value={password} onChangeText={setPassword} secret /><Button title="Crear y guardar copia cifrada" disabled={busy} onPress={exportCopy} /><Button title="Comprobar copia guardada" disabled={busy} onPress={verify} /></View>;
 }
 function Consultation({
+  startMode,
+  onClose,
   state,
   file,
   view,
@@ -664,7 +669,8 @@ function Consultation({
   const [signs, setSigns] = useState(results.signs),
     [pleno, setPleno] = useState(results.pleno),
     [screen, setScreen] = useState('partidos'),
-    [menuOpen, setMenuOpen] = useState(false);
+    [menuOpen, setMenuOpen] = useState(false),
+    [simulationActive, setSimulationActive] = useState(startMode === 'simulation');
   useEffect(() => {
     setSigns(results.signs);
     setPleno(results.pleno);
@@ -678,30 +684,27 @@ function Consultation({
     offset: Math.min(offset, Math.max(0, Math.floor((count - 1) / 25) * 25))
   });
   const elige = file.elige8 ? scrutinizeElige8(file.elige8, results.signs, r.elige8Prize) : null;
+  const isSimulation = simulationActive || session.mode === 'simulation';
   const setSign = (index, value) => setSigns(current => current.slice(0, index) + value + current.slice(index + 1));
   const select = value => {
     setScreen(value);
     setMenuOpen(false);
   };
   return <View style={styles.scrutiny}><View style={styles.scrutinyHeader}><View><Text style={styles.eyebrow}>COMBINACIÓN</Text><Text style={styles.scrutinyTitle}>{file.name}</Text><Text style={styles.scrutinyMeta}>Jornada {r.number} · {file.bets.length.toLocaleString('es-ES')} apuestas</Text></View><Pressable accessibilityRole="button" accessibilityLabel="Abrir menú de escrutinio" onPress={() => setMenuOpen(!menuOpen)} style={styles.menuButton}><Text style={styles.menuButtonText}>Opciones ▾</Text></Pressable></View>
- {menuOpen && <View style={styles.menu}><Button title="Partidos y resultados" selected={screen === 'partidos'} disabled={disabled} onPress={() => select('partidos')} /><Button title="Aciertos y columnas" selected={screen === 'aciertos'} disabled={disabled} onPress={() => select('aciertos')} /><Button title="Elige 8" selected={screen === 'elige'} disabled={disabled} onPress={() => select('elige')} /></View>}
+ {menuOpen && <View style={styles.menu}><Button title="Partidos y resultados" selected={screen === 'partidos'} disabled={disabled} onPress={() => select('partidos')} /><Button title="Aciertos y columnas" selected={screen === 'aciertos'} disabled={disabled} onPress={() => select('aciertos')} /><Button title="Elige 8" selected={screen === 'elige'} disabled={disabled} onPress={() => select('elige')} /><Button title="Volver a combinaciones" disabled={disabled} onPress={onClose} /></View>}
  <View style={styles.tabRow}><Pressable accessibilityRole="tab" accessibilityState={{selected:screen === 'partidos'}} onPress={() => select('partidos')} style={[styles.tab, screen === 'partidos' && styles.tabActive]}><Text style={[styles.tabText, screen === 'partidos' && styles.tabTextActive]}>Partidos</Text></Pressable><Pressable accessibilityRole="tab" accessibilityState={{selected:screen === 'aciertos'}} onPress={() => select('aciertos')} style={[styles.tab, screen === 'aciertos' && styles.tabActive]}><Text style={[styles.tabText, screen === 'aciertos' && styles.tabTextActive]}>Aciertos</Text></Pressable><Pressable accessibilityRole="tab" accessibilityState={{selected:screen === 'elige'}} onPress={() => select('elige')} style={[styles.tab, screen === 'elige' && styles.tabActive]}><Text style={[styles.tabText, screen === 'elige' && styles.tabTextActive]}>Elige 8</Text></Pressable></View>
- {screen === 'partidos' && <><Text style={styles.badge}>{session.mode === 'simulation' ? 'SIMULACIÓN' : 'RESULTADOS GUARDADOS DE LA JORNADA'}</Text><Notice>{session.mode === 'simulation' ? 'La simulación no modifica los resultados de la jornada.' : r.results ? 'Origen: ' + r.results.source + ' · ' + r.results.checkedAt : 'No hay resultados consultados. Los partidos están pendientes.'}</Notice>
+ {screen === 'partidos' && <><View style={styles.modeRow}><Button title="Resultados de la jornada" selected={!isSimulation} disabled={disabled} onPress={() => { setSimulationActive(false); perform({ type: 'showRound', fileId: file.id }); }} /><Button title="Simulación" selected={isSimulation} disabled={disabled} onPress={() => setSimulationActive(true)} /></View><Text style={styles.badge}>{isSimulation ? 'SIMULACIÓN ACTIVA' : 'RESULTADOS GUARDADOS DE LA JORNADA'}</Text><Notice>{isSimulation ? 'La simulación no modifica los resultados de la jornada hasta que pulses Guardar simulación.' : r.results ? 'Origen: ' + r.results.source + ' · ' + r.results.checkedAt : 'No hay resultados consultados. Los partidos están pendientes.'}</Notice>
  <Text style={styles.sectionHeading}>Los 14 partidos</Text><View style={styles.fixtureList}>{Array.from({length: 14}, (_, index) => <View key={index} style={styles.fixture}><Text style={styles.fixtureNumber}>{index + 1}</Text><Text style={styles.fixtureName}>{r.matches[index]?.label || 'Partido sin nombre guardado'}</Text><View style={styles.signRow}>{['1', 'X', '2'].map(value => <Pressable key={value} accessibilityRole="button" accessibilityLabel={'Partido ' + (index + 1) + ': ' + value} accessibilityState={{selected: signs[index] === value}} disabled={disabled} onPress={() => setSign(index, value)} style={[styles.signButton, signs[index] === value && styles.signSelected]}><Text style={[styles.signText, signs[index] === value && styles.signTextSelected]}>{value}</Text></Pressable>)}</View></View>)}</View>
  <View style={styles.plenoCard}><Text style={styles.sectionHeading}>15 · Pleno al 15</Text>{['Local', 'Visitante'].map((label, index) => <View key={label} style={styles.plenoRow}><Text style={styles.plenoLabel}>{label}</Text><View style={styles.signRow}>{['0', '1', '2', 'M'].map(value => <Pressable key={value} accessibilityRole="button" accessibilityLabel={label + ': ' + value} accessibilityState={{selected: pleno[index] === value}} disabled={disabled} onPress={() => setPleno(current => current.slice(0, index) + value + current.slice(index + 1))} style={[styles.goalButton, pleno[index] === value && styles.goalSelected]}><Text style={styles.signText}>{value}</Text></Pressable>)}</View></View>)}</View>
  {(signs !== results.signs || pleno !== results.pleno) && <Notice>Cambios pendientes. Pulsa Guardar simulación para recalcular los aciertos.</Notice>}
- <Button title="Guardar simulación" disabled={disabled} onPress={() => perform({
+ {isSimulation && <Button title="Guardar simulación" disabled={disabled} onPress={() => perform({
       type: 'simulate',
       fileId: file.id,
       results: {
         signs,
         pleno
       }
-    })} />
- <Button title="Resultados de la jornada" disabled={disabled} onPress={() => perform({
-      type: 'showRound',
-      fileId: file.id
-    })} />
+    })} />}
  <Button title="Guardar como resultados manuales" disabled={disabled} onPress={() => perform({
       type: 'roundResults',
       roundId: r.id,
@@ -923,6 +926,12 @@ const styles = StyleSheet.create({
     padding: 4,
     marginTop: 16,
     marginBottom: 14
+  },
+  modeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginHorizontal: -3,
+    marginBottom: 2
   },
   tab: {
     flex: 1,
@@ -1158,3 +1167,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center'
   }
 });
+
