@@ -74,6 +74,13 @@ function applyCommand(raw, command, now) {
       round(state, c.roundId);
       state.lastView = view(c.roundId);
       break;
+    case 'setRoundMatches':
+      {
+        const r = round(state, c.roundId);
+        if (!Array.isArray(c.matches) || c.matches.length !== 15) fail('MATCHES_INVALID');
+        r.matches = c.matches;
+        break;
+      }
     case 'selectFile':
       {
         const f = file(state, c.fileId);
