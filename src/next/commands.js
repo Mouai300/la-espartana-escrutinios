@@ -134,6 +134,18 @@ function applyCommand(raw, command, now) {
         r.results = value;
         break;
       }
+    case 'liveResults':
+      {
+        const r = round(state, c.roundId);
+        const value = C.validateSnapshot({
+          ...c.results,
+          source: 'loteria300',
+          status: 'provisional'
+        });
+        for (const f of state.files.filter(f => f.roundId === r.id)) f.consultation = C.updateRound(sessionFor(state, f), r.id, value);
+        r.results = value;
+        break;
+      }
     case 'filter':
       {
         const f = file(state, c.fileId);
@@ -203,3 +215,4 @@ module.exports = {
   consultationView,
   sessionFor
 };
+
