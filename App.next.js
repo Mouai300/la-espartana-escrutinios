@@ -662,7 +662,9 @@ function Consultation({
     session = sessionFor(state, file),
     results = activeResults(session);
   const [signs, setSigns] = useState(results.signs),
-    [pleno, setPleno] = useState(results.pleno);
+    [pleno, setPleno] = useState(results.pleno),
+    [screen, setScreen] = useState('partidos'),
+    [menuOpen, setMenuOpen] = useState(false);
   useEffect(() => {
     setSigns(results.signs);
     setPleno(results.pleno);
@@ -676,8 +678,17 @@ function Consultation({
     offset: Math.min(offset, Math.max(0, Math.floor((count - 1) / 25) * 25))
   });
   const elige = file.elige8 ? scrutinizeElige8(file.elige8, results.signs, r.elige8Prize) : null;
-  return <View style={styles.card}><Text style={styles.heading}>{file.name}</Text><Text style={styles.badge}>{session.mode === 'simulation' ? 'SIMULACIÓN' : 'RESULTADOS GUARDADOS DE LA JORNADA'}</Text><Notice>{session.mode === 'simulation' ? 'La simulación no modifica los resultados de la jornada.' : r.results ? 'Origen: ' + r.results.source + ' · ' + r.results.checkedAt : 'No hay resultados consultados. Los partidos están pendientes.'}</Notice>
- <Field label="Signos de los 14 partidos (1, X, 2 o ?)" value={signs} onChangeText={s => setSigns(s.toUpperCase())} /><Field label="Pleno al 15 (0, 1, 2, M o ?)" value={pleno} onChangeText={s => setPleno(s.toUpperCase())} />
+  const setSign = (index, value) => setSigns(current => current.slice(0, index) + value + current.slice(index + 1));
+  const select = value => {
+    setScreen(value);
+    setMenuOpen(false);
+  };
+  return <View style={styles.scrutiny}><View style={styles.scrutinyHeader}><View><Text style={styles.eyebrow}>COMBINACIÓN</Text><Text style={styles.scrutinyTitle}>{file.name}</Text><Text style={styles.scrutinyMeta}>Jornada {r.number} · {file.bets.length.toLocaleString('es-ES')} apuestas</Text></View><Pressable accessibilityRole="button" accessibilityLabel="Abrir menú de escrutinio" onPress={() => setMenuOpen(!menuOpen)} style={styles.menuButton}><Text style={styles.menuButtonText}>Opciones ▾</Text></Pressable></View>
+ {menuOpen && <View style={styles.menu}><Button title="Partidos y resultados" selected={screen === 'partidos'} disabled={disabled} onPress={() => select('partidos')} /><Button title="Aciertos y columnas" selected={screen === 'aciertos'} disabled={disabled} onPress={() => select('aciertos')} /><Button title="Elige 8" selected={screen === 'elige'} disabled={disabled} onPress={() => select('elige')} /></View>}
+ <View style={styles.tabRow}><Pressable accessibilityRole="tab" accessibilityState={{selected:screen === 'partidos'}} onPress={() => select('partidos')} style={[styles.tab, screen === 'partidos' && styles.tabActive]}><Text style={[styles.tabText, screen === 'partidos' && styles.tabTextActive]}>Partidos</Text></Pressable><Pressable accessibilityRole="tab" accessibilityState={{selected:screen === 'aciertos'}} onPress={() => select('aciertos')} style={[styles.tab, screen === 'aciertos' && styles.tabActive]}><Text style={[styles.tabText, screen === 'aciertos' && styles.tabTextActive]}>Aciertos</Text></Pressable><Pressable accessibilityRole="tab" accessibilityState={{selected:screen === 'elige'}} onPress={() => select('elige')} style={[styles.tab, screen === 'elige' && styles.tabActive]}><Text style={[styles.tabText, screen === 'elige' && styles.tabTextActive]}>Elige 8</Text></Pressable></View>
+ {screen === 'partidos' && <><Text style={styles.badge}>{session.mode === 'simulation' ? 'SIMULACIÓN' : 'RESULTADOS GUARDADOS DE LA JORNADA'}</Text><Notice>{session.mode === 'simulation' ? 'La simulación no modifica los resultados de la jornada.' : r.results ? 'Origen: ' + r.results.source + ' · ' + r.results.checkedAt : 'No hay resultados consultados. Los partidos están pendientes.'}</Notice>
+ <Text style={styles.sectionHeading}>Los 14 partidos</Text><View style={styles.fixtureList}>{Array.from({length: 14}, (_, index) => <View key={index} style={styles.fixture}><Text style={styles.fixtureNumber}>{index + 1}</Text><Text style={styles.fixtureName}>{r.matches[index]?.label || 'Partido sin nombre guardado'}</Text><View style={styles.signRow}>{['1', 'X', '2'].map(value => <Pressable key={value} accessibilityRole="button" accessibilityLabel={'Partido ' + (index + 1) + ': ' + value} accessibilityState={{selected: signs[index] === value}} disabled={disabled} onPress={() => setSign(index, value)} style={[styles.signButton, signs[index] === value && styles.signSelected]}><Text style={[styles.signText, signs[index] === value && styles.signTextSelected]}>{value}</Text></Pressable>)}</View></View>)}</View>
+ <View style={styles.plenoCard}><Text style={styles.sectionHeading}>15 · Pleno al 15</Text>{['Local', 'Visitante'].map((label, index) => <View key={label} style={styles.plenoRow}><Text style={styles.plenoLabel}>{label}</Text><View style={styles.signRow}>{['0', '1', '2', 'M'].map(value => <Pressable key={value} accessibilityRole="button" accessibilityLabel={label + ': ' + value} accessibilityState={{selected: pleno[index] === value}} disabled={disabled} onPress={() => setPleno(current => current.slice(0, index) + value + current.slice(index + 1))} style={[styles.goalButton, pleno[index] === value && styles.goalSelected]}><Text style={styles.signText}>{value}</Text></Pressable>)}</View></View>)}</View>
  {(signs !== results.signs || pleno !== results.pleno) && <Notice>Cambios pendientes. Pulsa Guardar simulación para recalcular los aciertos.</Notice>}
  <Button title="Guardar simulación" disabled={disabled} onPress={() => perform({
       type: 'simulate',
@@ -698,7 +709,8 @@ function Consultation({
         signs,
         pleno
       }
-    })} /><Notice>Los resultados manuales se guardan como provisionales. Este botón no consulta Internet ni acredita premios oficiales.</Notice>
+    })} /><Notice>Los resultados manuales se guardan como provisionales. Este botón no consulta Internet ni acredita premios oficiales.</Notice></>}
+ {screen === 'aciertos' && <>
  <Text style={styles.heading}>{summary.complete ? 'Aciertos por columna' : 'Aciertos conocidos · partidos pendientes'}</Text>
  <View style={styles.wrap}>{Array.from({
         length: 15
@@ -731,7 +743,8 @@ function Consultation({
     }} />
  <Text style={styles.heading}>{count} columnas seleccionadas</Text>
  {rows.map(row => <View key={row.number} style={styles.column}><Text style={styles.heading}>Columna {row.number} · {row.hits} aciertos{row.pending ? ' · ' + row.pending + ' pendientes' : ''}</Text><Text style={styles.bet}>{row.bet.slice(0, 14)} · {row.bet.slice(14)}</Text>{row.matches.map(m => <View key={m.number} style={styles.match}><Text style={styles.matchName}>{m.number}. {r.matches[m.number - 1]?.label || 'Partido sin nombre guardado'}</Text><Text style={m.status === 'miss' ? styles.miss : m.status === 'hit' ? styles.hit : styles.pending}>{m.played} → {m.actual} {m.status === 'miss' ? 'Fallo' : m.status === 'hit' ? 'Acierto' : 'Pendiente'}</Text></View>)}<Text style={styles.text}>Pleno: jugado {row.bet.slice(14)} · resultado {results.pleno}</Text></View>)}
- <View style={styles.wrap}><Button title="Anteriores" disabled={disabled || offset === 0} onPress={() => setOffset(Math.max(0, offset - 25))} /><Button title="Siguientes" disabled={disabled || offset + 25 >= count} onPress={() => setOffset(offset + 25)} /></View>
+ <View style={styles.wrap}><Button title="Anteriores" disabled={disabled || offset === 0} onPress={() => setOffset(Math.max(0, offset - 25))} /><Button title="Siguientes" disabled={disabled || offset + 25 >= count} onPress={() => setOffset(offset + 25)} /></View></>}
+ {screen === 'elige' && <><Text style={styles.heading}>Elige 8 independiente</Text>{!elige ? <Notice>Esta combinación no incluye Elige 8.</Notice> : <><View style={styles.eligeSummary}><Text style={styles.eyebrow}>RESULTADO DE LA SELECCIÓN</Text><Text style={styles.eligeHits}>{elige.hits} de 8 aciertos</Text><Text style={styles.scrutinyMeta}>{elige.pending ? elige.pending + ' pendientes' : 'Resultados completos'} · Jugado {money(elige.cost)}</Text></View>{file.elige8.picks.map(pick => { const actual = results.signs[pick.number - 1], hit = actual !== '?' && actual === pick.sign; return <View key={pick.number} style={[styles.eligePick, actual !== '?' && !hit && styles.eligeMiss]}><Text style={styles.fixtureNumber}>{pick.number}</Text><Text style={styles.fixtureName}>{r.matches[pick.number - 1]?.label || 'Partido sin nombre guardado'}</Text><Text style={hit ? styles.hit : actual === '?' ? styles.pending : styles.miss}>{pick.sign} → {actual}</Text></View>; })}<Notice>Elige 8 se calcula por separado de la Quiniela.</Notice></>}</>}
  </View>;
 }
 export default function AppNext() {
@@ -852,6 +865,201 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     marginVertical: 8
+  },
+  scrutiny: {
+    backgroundColor: '#11294d',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16
+  },
+  scrutinyHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 10
+  },
+  eyebrow: {
+    color: '#bfcde0',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1.1
+  },
+  scrutinyTitle: {
+    color: '#f8e5b3',
+    fontSize: 21,
+    fontWeight: '800',
+    marginTop: 2
+  },
+  scrutinyMeta: {
+    color: '#becce0',
+    fontSize: 12,
+    marginTop: 4
+  },
+  menuButton: {
+    backgroundColor: '#17355e',
+    borderColor: '#b99752',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 10
+  },
+  menuButtonText: {
+    color: '#f8e5b3',
+    fontSize: 12,
+    fontWeight: '700'
+  },
+  menu: {
+    backgroundColor: '#081c39',
+    borderColor: '#536d93',
+    borderWidth: 1,
+    borderRadius: 12,
+    marginTop: 12,
+    padding: 6
+  },
+  tabRow: {
+    flexDirection: 'row',
+    backgroundColor: '#081c39',
+    borderRadius: 12,
+    padding: 4,
+    marginTop: 16,
+    marginBottom: 14
+  },
+  tab: {
+    flex: 1,
+    minHeight: 42,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 9
+  },
+  tabActive: {
+    backgroundColor: '#f2f5fb'
+  },
+  tabText: {
+    color: '#becce0',
+    fontSize: 12,
+    fontWeight: '700'
+  },
+  tabTextActive: {
+    color: '#102843'
+  },
+  sectionHeading: {
+    color: '#f1cd80',
+    fontSize: 16,
+    fontWeight: '800',
+    marginVertical: 9
+  },
+  fixtureList: {
+    borderColor: '#405a7b',
+    borderWidth: 1,
+    borderRadius: 13,
+    overflow: 'hidden',
+    backgroundColor: '#0c2344'
+  },
+  fixture: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 56,
+    paddingHorizontal: 9,
+    gap: 8,
+    borderBottomColor: '#28466d',
+    borderBottomWidth: 1
+  },
+  fixtureNumber: {
+    color: '#bfcde0',
+    fontSize: 12,
+    width: 17,
+    fontWeight: '800'
+  },
+  fixtureName: {
+    flex: 1,
+    color: '#f2f5fb',
+    fontSize: 12,
+    fontWeight: '600'
+  },
+  signRow: {
+    flexDirection: 'row',
+    gap: 4
+  },
+  signButton: {
+    width: 35,
+    minHeight: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderColor: '#536d93',
+    borderWidth: 1,
+    borderRadius: 7,
+    backgroundColor: '#17355e'
+  },
+  signSelected: {
+    backgroundColor: '#f1cd80',
+    borderColor: '#ffe09a'
+  },
+  signText: {
+    color: '#f2f5fb',
+    fontWeight: '800',
+    fontSize: 13
+  },
+  signTextSelected: {
+    color: '#102843'
+  },
+  plenoCard: {
+    marginTop: 16,
+    backgroundColor: '#0c2344',
+    borderColor: '#b99752',
+    borderWidth: 1,
+    borderRadius: 13,
+    padding: 12
+  },
+  plenoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 7,
+    gap: 8
+  },
+  plenoLabel: {
+    color: '#d7e2f0',
+    fontSize: 13,
+    fontWeight: '600'
+  },
+  goalButton: {
+    width: 31,
+    minHeight: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderColor: '#536d93',
+    borderWidth: 1,
+    borderRadius: 7,
+    backgroundColor: '#17355e'
+  },
+  goalSelected: {
+    backgroundColor: '#b99752',
+    borderColor: '#ffe09a'
+  },
+  eligeSummary: {
+    backgroundColor: '#081c39',
+    borderRadius: 13,
+    padding: 16,
+    marginVertical: 10
+  },
+  eligeHits: {
+    color: '#f1cd80',
+    fontSize: 25,
+    fontWeight: '800',
+    marginTop: 3
+  },
+  eligePick: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#0c2344',
+    borderBottomWidth: 1,
+    borderBottomColor: '#28466d',
+    minHeight: 51,
+    paddingHorizontal: 9
+  },
+  eligeMiss: {
+    backgroundColor: '#402638'
   },
   text: {
     color: '#f2f5fb',
