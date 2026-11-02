@@ -17,6 +17,9 @@ const {
   fetchLiveScore
 } = require('./src/next/livescore');
 const {
+  fetchRound
+} = require('./src/next/round-source');
+const {
   overview,
   displayTotals: totals,
   page
@@ -73,6 +76,10 @@ function errorText(error) {
     ,LIVE_UNAVAILABLE: 'No se han podido consultar los resultados en directo de Lotería 300. Comprueba tu conexión o vuelve a intentarlo más tarde.'
     ,LIVE_INVALID: 'Lotería 300 ha devuelto un formato de resultados no reconocido. No se ha modificado ninguna jornada.'
     ,LIVE_ROUND_MISMATCH: 'La consulta corresponde a otra jornada. No se ha modificado ninguna jornada.'
+    ,ROUND_SOURCE_UNAVAILABLE: 'No se han podido cargar los partidos de Lotería 300. Comprueba tu conexión o vuelve a intentarlo.'
+    ,ROUND_SOURCE_INVALID: 'Lotería 300 ha devuelto un formato de jornada no reconocido. No se ha modificado ningún partido.'
+    ,ROUND_SOURCE_MISMATCH: 'La jornada seleccionada no coincide con la jornada disponible en Lotería 300. No se ha modificado ningún partido.'
+    ,MATCHES_INVALID: 'Los partidos recibidos no son válidos. No se ha modificado la jornada.'
   }[error?.code] || 'No se ha completado la operación. Revisa los datos y vuelve a intentarlo. El historial anterior no se borra.';
 }
 function Button({
@@ -254,6 +261,18 @@ function PrivateWorkspace({
       setWorking(false);
     }
   }
+  async function selectAndLoadRound(entry) {
+    setWorking(true);
+    try {
+      await workspace.apply({type:'selectRound', roundId:entry.id});
+      const source = await fetchRound(entry.number);
+      await workspace.apply({type:'setRoundMatches', roundId:entry.id, matches:source.matches});
+    } catch (error) {
+      Alert.alert('Cargar jornada', errorText({code:error?.message}));
+    } finally {
+      setWorking(false);
+    }
+  }
   function addRound() {
     const entry = catalogue.rounds.find(x => x.season === season && x.round === Number(number));
     perform({
@@ -277,10 +296,7 @@ function PrivateWorkspace({
     });
   }
   return <>
- <View style={styles.card}><Text style={styles.heading}>Jornadas</Text><View style={styles.wrap}>{state.rounds.map(x => <Button key={x.id} title={x.season + ' · ' + x.number} selected={r?.id === x.id} disabled={disabled} onPress={() => perform({
-          type: 'selectRound',
-          roundId: x.id
-        })} />)}</View>
+ <View style={styles.card}><Text style={styles.heading}>Jornadas</Text><Notice>Al elegir una jornada, se cargan sus partidos desde Lotería 300. Si la fuente aún no ofrece esa jornada, se conserva la información local.</Notice><View style={styles.wrap}>{state.rounds.map(x => <Button key={x.id} title={x.season + ' · ' + x.number} selected={r?.id === x.id} disabled={disabled} onPress={() => selectAndLoadRound(x)} />)}</View>
  <Field label="Temporada (2026-27)" value={season} onChangeText={setSeason} /><Field label="Número de jornada" value={number} onChangeText={setNumber} keyboardType="number-pad" /><Button title="Añadir jornada" disabled={disabled} onPress={addRound} />
  <Text style={styles.text}>Precio guardado: {money(state.seasons[season] ?? state.price)} por apuesta</Text><Field label="Nuevo precio por apuesta (€)" value={price} onChangeText={setPrice} keyboardType="decimal-pad" /><Button title="Guardar precio de temporada" disabled={disabled} onPress={savePrice} /><Notice>Los archivos importados conservan el precio con el que se guardaron.</Notice></View>
  {r && <View style={styles.card}><Text style={styles.heading}>Jornada {r.number} · {r.season}</Text><Notice>{r.matches.length ? 'Partidos de la copia local de Lotería 300. No se han consultado nuevos marcadores.' : 'Esta jornada aún no tiene partidos guardados.'}</Notice><Button title="Importar TXT" disabled={disabled} onPress={importTxt} />{state.files.filter(x => x.roundId === r.id).map(x => <Button key={x.id} title={x.name + ' · ' + x.bets.length + ' apuestas'} selected={f?.id === x.id} disabled={disabled} onPress={() => perform({
